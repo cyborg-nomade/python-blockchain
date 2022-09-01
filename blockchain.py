@@ -33,5 +33,8 @@ def get_user_input():
 for item in range(3):
     get_user_input()
 
+for block in blockchain:
+    print("Outputting block")
+    print(block)
 
-print(blockchain)
+print("DONE!")
