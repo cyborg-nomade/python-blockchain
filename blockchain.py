@@ -1,6 +1,8 @@
 """blockchain script"""
 
 blockchain = []
+open_transactions = []
+owner = "Uriel"
 
 
 def get_last_blockchain_value():
@@ -14,34 +16,45 @@ def get_last_blockchain_value():
     return blockchain[-1]
 
 
-def add_transaction(transaction_amount, last_transaction_value):
+def add_transaction(sender, recipient, amount=1.0):
     """add transaction to blockchain
 
     Args:
-      transaction_amount (int): the amount to add to the blockchain
-      last_transaction_value (list): last blockchain value
+      sender (str): the sender name,
+      recipient (str): the recipient name,
+      amount (float): the amount to add to the blockchain
     """
+    transaction = {"sender": sender, "recipient": recipient, "amount": amount}
+    open_transactions.append(transaction)
 
-    if last_transaction_value is None:
-        last_transaction_value = [1.0]
-    blockchain.append([last_transaction_value, transaction_amount])
+
+def mine_block():
+    """mines a block in the blockchain"""
 
 
 def handle_transaction():
-    """gets user input"""
-    input_text = input("Type the value of the transaction: ")
+    """gets user input for a new transaction"""
+    amount_text = input("Type the amount of the transaction: ")
+    # sender_name = input("Type the name of the sender: ")
+    recipient_name = input("Type the name of the recipient: ")
 
     try:
-        tx_amount = float(input_text)
+        tx_amount = float(amount_text)
         print(
-            "\n\nAdding a " + str(tx_amount) + " transaction to the blockchain...\n\n"
+            "\n\nAdding a "
+            + str(tx_amount)
+            + " transaction from "
+            + owner
+            + " to "
+            + recipient_name
+            + " to the blockchain...\n\n"
         )
     except ValueError:
-        print("ERROR: That is not a number!")
+        print("ERROR: That amount is not a number!")
         input()
         return
 
-    add_transaction(tx_amount, get_last_blockchain_value())
+    add_transaction(owner, recipient_name, tx_amount)
     print("DONE!")
     input("Click to continue...")
 
