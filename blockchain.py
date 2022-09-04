@@ -27,26 +27,23 @@ def add_transaction(transaction_amount, last_transaction_value):
     blockchain.append([last_transaction_value, transaction_amount])
 
 
-def add_transaction():
-    """gets user input
-    """
+def handle_transaction():
+    """gets user input"""
     input_text = input("Type the value of the transaction: ")
 
     try:
         tx_amount = float(input_text)
-        print("\n\nAdding a " + str(tx_amount) +
-              " transaction to the blockchain...\n\n")
+        print(
+            "\n\nAdding a " + str(tx_amount) + " transaction to the blockchain...\n\n"
+        )
     except ValueError:
         print("ERROR: That is not a number!")
         input()
         return
 
-    if len(blockchain) <= 0:
-        add_value(tx_amount, [1.0])
-    else:
-        add_value(tx_amount, get_last_blockchain_value())
+    add_transaction(tx_amount, get_last_blockchain_value())
     print("DONE!")
-    input()
+    input("Click to continue...")
 
 
 def get_user_choice():
@@ -59,13 +56,12 @@ def get_user_choice():
 
 
 def print_blockchain_blocks():
-    """Prints all the blocks in the blockchain
-    """
-    for block in blockchain:
-        print("Outputting block...")
+    """Prints all the blocks in the blockchain"""
+    for index, block in enumerate(blockchain):
+        print("Outputting block number: " + str(index + 1))
         print(block)
-    print("DONE!")
-    input()
+    print("\n\nDONE!")
+    input("Click to continue...")
 
 
 COMMAND = ""
@@ -82,7 +78,7 @@ while COMMAND != "exit":
         case "exit" | "EXIT":
             continue
         case "trans" | "TRANS":
-            add_transaction()
+            handle_transaction()
         case "print" | "PRINT":
             print_blockchain_blocks()
         case _:
