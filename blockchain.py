@@ -1,8 +1,14 @@
 """blockchain script"""
 
-blockchain = []
+GENESIS_BLOCK = {
+    "previous_hash": "",
+    "index": 0,
+    "transactions": [],
+}
+blockchain = [GENESIS_BLOCK]
 open_transactions = []
-owner = "Uriel"
+OWNER = "Uriel"
+participants = {OWNER}
 
 
 def get_last_blockchain_value():
@@ -25,11 +31,34 @@ def add_transaction(sender, recipient, amount=1.0):
       amount (float): the amount to add to the blockchain
     """
     transaction = {"sender": sender, "recipient": recipient, "amount": amount}
+    participants.add(sender)
+    participants.add(recipient)
     open_transactions.append(transaction)
+
+
+def hash_block(block):
+    """Returns the hash of the block
+
+    Args:
+        block: the block to be hashed
+
+    Returns:
+        string: the hash of the block
+    """
+    return "-".join([str(item[1]) for item in block.items()])
 
 
 def mine_block():
     """mines a block in the blockchain"""
+    last_block = blockchain[-1]
+    hash_mock = hash_block(last_block)
+    print(hash_mock)
+    block = {
+        "previous_hash": hash_mock,
+        "index": len(blockchain),
+        "transactions": open_transactions,
+    }
+    blockchain.append(block)
 
 
 def handle_transaction():
@@ -44,7 +73,7 @@ def handle_transaction():
             "\n\nAdding a "
             + str(tx_amount)
             + " transaction from "
-            + owner
+            + OWNER
             + " to "
             + recipient_name
             + " to the blockchain...\n\n"
@@ -54,7 +83,7 @@ def handle_transaction():
         input()
         return
 
-    add_transaction(owner, recipient_name, tx_amount)
+    add_transaction(OWNER, recipient_name, tx_amount)
     print("DONE!")
     input("Click to continue...")
 
@@ -77,15 +106,32 @@ def print_blockchain_blocks():
     input("Click to continue...")
 
 
+def verify_chain():
+    """verifies the validity of the blockchain"""
+    for (index, block) in enumerate(blockchain):
+        if index == 0:
+            continue
+        if block["previous_hash"] != hash_block(blockchain[index - 1]):
+            return False
+    return True
+
+
 COMMAND = ""
 while COMMAND != "exit":
     print("\nChoose the command you want to execute...")
     print("EXIT: exits the program")
-    print("TRANS: includes a new transaction in the blockchain")
+    print("TRANS: includes a new pending transaction")
+    print("MINE: mines a new block")
+    print("PART: prints all the participants in the blockchain")
     print("PRINT: prints all the blocks in the blockchain\n")
     COMMAND = get_user_choice()
 
     print("You chose: " + COMMAND + "\n")
+
+    if not verify_chain():
+        print_blockchain_blocks()
+        print("The chain is invalid!")
+        break
 
     match COMMAND:
         case "exit" | "EXIT":
@@ -94,5 +140,9 @@ while COMMAND != "exit":
             handle_transaction()
         case "print" | "PRINT":
             print_blockchain_blocks()
+        case "mine" | "MINE":
+            mine_block()
+        case "part" | "PART":
+            print(participants)
         case _:
             print("That's not a command. Try again")
