@@ -59,6 +59,7 @@ def mine_block():
         "transactions": open_transactions,
     }
     blockchain.append(block)
+    return True
 
 
 def handle_transaction():
@@ -141,7 +142,8 @@ while COMMAND != "exit":
         case "print" | "PRINT":
             print_blockchain_blocks()
         case "mine" | "MINE":
-            mine_block()
+            if mine_block():
+                open_transactions = []
         case "part" | "PART":
             print(participants)
         case _:
