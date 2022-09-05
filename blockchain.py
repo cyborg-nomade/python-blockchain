@@ -36,6 +36,34 @@ def add_transaction(sender, recipient, amount=1.0):
     open_transactions.append(transaction)
 
 
+def get_balances(participant):
+    """gets a participants' balance form the blockchain
+
+    Args:
+        participant (string): the participant's name
+
+    Returns:
+        int: participants' balance
+    """
+    tx_sender = [
+        [tx["amount"] for tx in block["transactions"] if tx["sender"] == participant]
+        for block in blockchain
+    ]
+    amount_sent = 0
+    for tx in tx_sender:
+        if len(tx) > 0:
+            amount_sent += tx[0]
+    tx_recipient = [
+        [tx["amount"] for tx in block["transactions"] if tx["recipient"] == participant]
+        for block in blockchain
+    ]
+    amount_received = 0
+    for tx in tx_recipient:
+        if len(tx) > 0:
+            amount_received += tx[0]
+    return amount_received - amount_sent
+
+
 def hash_block(block):
     """Returns the hash of the block
 
@@ -52,7 +80,6 @@ def mine_block():
     """mines a block in the blockchain"""
     last_block = blockchain[-1]
     hash_mock = hash_block(last_block)
-    print(hash_mock)
     block = {
         "previous_hash": hash_mock,
         "index": len(blockchain),
@@ -133,6 +160,8 @@ while COMMAND != "exit":
         print_blockchain_blocks()
         print("The chain is invalid!")
         break
+
+    print(get_balances("Uriel"))
 
     match COMMAND:
         case "exit" | "EXIT":
