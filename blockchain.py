@@ -23,18 +23,31 @@ def get_last_blockchain_value():
     return blockchain[-1]
 
 
+def verify_transaction(transaction):
+    """verifies transaction against sender's balance
+
+    Args:
+        transaction: the transaction to be verified
+    """
+    sender_balance = get_balances(transaction["sender"])
+    return sender_balance >= transaction["amount"]
+
+
 def add_transaction(sender, recipient, amount=1.0):
     """add transaction to blockchain
 
     Args:
-      sender (str): the sender name,
-      recipient (str): the recipient name,
-      amount (float): the amount to add to the blockchain
+        sender (str): the sender name,
+        recipient (str): the recipient name,
+        amount (float): the amount to add to the blockchain
     """
     transaction = {"sender": sender, "recipient": recipient, "amount": amount}
-    participants.add(sender)
-    participants.add(recipient)
-    open_transactions.append(transaction)
+    if verify_transaction(transaction):
+        participants.add(sender)
+        participants.add(recipient)
+        open_transactions.append(transaction)
+        return True
+    return False
 
 
 def get_balances(participant):
@@ -50,6 +63,10 @@ def get_balances(participant):
         [tx["amount"] for tx in block["transactions"] if tx["sender"] == participant]
         for block in blockchain
     ]
+    open_tx_sender = [
+        tx["amount"] for tx in open_transactions if tx["sender"] == participant
+    ]
+    tx_sender.append(open_tx_sender)
     amount_sent = 0
     for txn in tx_sender:
         if len(txn) > 0:
@@ -118,9 +135,12 @@ def handle_transaction():
         input()
         return
 
-    add_transaction(OWNER, recipient_name, tx_amount)
-    print("DONE!")
-    input("Click to continue...")
+    if add_transaction(OWNER, recipient_name, tx_amount):
+        print("DONE!")
+        input("Click to continue...")
+    else:
+        print("Transaction failed for lack of funds!")
+    print(open_transactions)
 
 
 def get_user_choice():
