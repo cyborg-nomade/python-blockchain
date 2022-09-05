@@ -1,5 +1,6 @@
 """blockchain script"""
 
+MINING_REWARD = 10
 GENESIS_BLOCK = {
     "previous_hash": "",
     "index": 0,
@@ -50,17 +51,17 @@ def get_balances(participant):
         for block in blockchain
     ]
     amount_sent = 0
-    for tx in tx_sender:
-        if len(tx) > 0:
-            amount_sent += tx[0]
+    for txn in tx_sender:
+        if len(txn) > 0:
+            amount_sent += txn[0]
     tx_recipient = [
         [tx["amount"] for tx in block["transactions"] if tx["recipient"] == participant]
         for block in blockchain
     ]
     amount_received = 0
-    for tx in tx_recipient:
-        if len(tx) > 0:
-            amount_received += tx[0]
+    for txn in tx_recipient:
+        if len(txn) > 0:
+            amount_received += txn[0]
     return amount_received - amount_sent
 
 
@@ -80,6 +81,12 @@ def mine_block():
     """mines a block in the blockchain"""
     last_block = blockchain[-1]
     hash_mock = hash_block(last_block)
+    reward_transaction = {
+        "sender": "MINING",
+        "recipient": OWNER,
+        "amount": MINING_REWARD,
+    }
+    open_transactions.append(reward_transaction)
     block = {
         "previous_hash": hash_mock,
         "index": len(blockchain),
