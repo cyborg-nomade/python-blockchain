@@ -1,11 +1,12 @@
 """blockchain script"""
 
+import hashlib
+import json
+from functools import reduce
+from collections import OrderedDict
+
 MINING_REWARD = 10
-GENESIS_BLOCK = {
-    "previous_hash": "",
-    "index": 0,
-    "transactions": [],
-}
+GENESIS_BLOCK = {"previous_hash": "", "index": 0, "transactions": [], "proof": 100}
 blockchain = [GENESIS_BLOCK]
 open_transactions = []
 OWNER = "Uriel"
@@ -41,7 +42,9 @@ def add_transaction(sender, recipient, amount=1.0):
         recipient (str): the recipient name,
         amount (float): the amount to add to the blockchain
     """
-    transaction = {"sender": sender, "recipient": recipient, "amount": amount}
+    transaction = OrderedDict(
+        [("sender", sender), ("recipient", recipient), ("amount", amount)]
+    )
     if verify_transaction(transaction):
         participants.add(sender)
         participants.add(recipient)
@@ -67,18 +70,26 @@ def get_balances(participant):
         tx["amount"] for tx in open_transactions if tx["sender"] == participant
     ]
     tx_sender.append(open_tx_sender)
-    amount_sent = 0
-    for txn in tx_sender:
-        if len(txn) > 0:
-            amount_sent += txn[0]
+    amount_sent = reduce(
+        lambda tx_sum, tx_amount: tx_sum + sum(tx_amount)
+        if len(tx_amount) > 0
+        else tx_sum + 0,
+        tx_sender,
+        0,
+    )
+
     tx_recipient = [
         [tx["amount"] for tx in block["transactions"] if tx["recipient"] == participant]
         for block in blockchain
     ]
-    amount_received = 0
-    for txn in tx_recipient:
-        if len(txn) > 0:
-            amount_received += txn[0]
+    amount_received = reduce(
+        lambda tx_sum, tx_amount: tx_sum + sum(tx_amount)
+        if len(tx_amount) > 0
+        else tx_sum + 0,
+        tx_recipient,
+        0,
+    )
+
     return amount_received - amount_sent
 
 
@@ -91,24 +102,52 @@ def hash_block(block):
     Returns:
         string: the hash of the block
     """
-    return "-".join([str(item[1]) for item in block.items()])
+    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
+
+
+def valid_proof(transactions, last_hash, proof):
+    """returns whether a proof-of-work is valid
+
+    Args:
+        transaction (list): a list of transaction objects
+        last_hash (string): the has string of the last block successfully mined
+        proof (string): a string of numbers
+    """
+    guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    print(guess_hash)
+    return guess_hash[0:2] == "00"
+
+
+def proof_of_work():
+    """executes proof-of-work algorithm
+
+    Returns:
+        int: the number that satisfies the proof-of-work algorithm
+    """
+    last_block = blockchain[-1]
+    last_hash = hash_block(last_block)
+    proof = 0
+    while not valid_proof(open_transactions, last_hash, proof):
+        proof += 1
+    return proof
 
 
 def mine_block():
     """mines a block in the blockchain"""
     last_block = blockchain[-1]
-    hash_mock = hash_block(last_block)
-    reward_transaction = {
-        "sender": "MINING",
-        "recipient": OWNER,
-        "amount": MINING_REWARD,
-    }
+    hashed_block = hash_block(last_block)
+    proof = proof_of_work()
+    reward_transaction = OrderedDict(
+        [("sender", "MINING"), ("recipient", OWNER), ("amount", MINING_REWARD)]
+    )
     copied_transactions = open_transactions[:]
     copied_transactions.append(reward_transaction)
     block = {
-        "previous_hash": hash_mock,
+        "previous_hash": hashed_block,
         "index": len(blockchain),
         "transactions": copied_transactions,
+        "proof": proof,
     }
     blockchain.append(block)
     return True
@@ -169,6 +208,11 @@ def verify_chain():
             continue
         if block["previous_hash"] != hash_block(blockchain[index - 1]):
             return False
+        if not valid_proof(
+            block["transactions"][:-1], block["previous_hash"], block["proof"]
+        ):
+            print("Proof of work is not valid")
+            return False
     return True
 
 
@@ -189,7 +233,7 @@ while COMMAND != "exit":
         print("The chain is invalid!")
         break
 
-    print(get_balances("Uriel"))
+    print(f"Balances for {OWNER}: {get_balances(OWNER):6.2f}")
 
     match COMMAND:
         case "exit" | "EXIT":
