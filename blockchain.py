@@ -1,9 +1,8 @@
 """blockchain script"""
 
-import hashlib
-import json
 from functools import reduce
 from collections import OrderedDict
+from utils.hash_util import hash_string_256, hash_block
 
 MINING_REWARD = 10
 GENESIS_BLOCK = {"previous_hash": "", "index": 0, "transactions": [], "proof": 100}
@@ -93,18 +92,6 @@ def get_balances(participant):
     return amount_received - amount_sent
 
 
-def hash_block(block):
-    """Returns the hash of the block
-
-    Args:
-        block: the block to be hashed
-
-    Returns:
-        string: the hash of the block
-    """
-    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
-
-
 def valid_proof(transactions, last_hash, proof):
     """returns whether a proof-of-work is valid
 
@@ -114,7 +101,7 @@ def valid_proof(transactions, last_hash, proof):
         proof (string): a string of numbers
     """
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
-    guess_hash = hashlib.sha256(guess).hexdigest()
+    guess_hash = hash_string_256(guess)
     print(guess_hash)
     return guess_hash[0:2] == "00"
 
