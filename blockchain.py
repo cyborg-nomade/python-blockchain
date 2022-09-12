@@ -3,6 +3,7 @@
 from functools import reduce
 from collections import OrderedDict
 from utils.hash_util import hash_string_256, hash_block
+import json
 
 MINING_REWARD = 10
 GENESIS_BLOCK = {"previous_hash": "", "index": 0, "transactions": [], "proof": 100}
@@ -10,6 +11,57 @@ blockchain = [GENESIS_BLOCK]
 open_transactions = []
 OWNER = "Uriel"
 participants = {OWNER}
+
+
+def load_data():
+    """loads blockchain data from file"""
+    with open("blockchain.txt", mode="r", encoding="utf-8") as blockchain_file:
+        file_content = blockchain_file.readlines()
+        global blockchain
+        global open_transactions
+        blockchain = json.loads(file_content[0][:-1])
+        updated_blockchain = []
+        for block in blockchain:
+            updated_block = {
+                "previous_hash": block["previous_hash"],
+                "index": block["index"],
+                "proof": block["proof"],
+                "transactions": [
+                    OrderedDict(
+                        [
+                            ("sender", tx["sender"]),
+                            ("recipient", tx["recipient"]),
+                            ("amount", tx["amount"]),
+                        ]
+                    )
+                    for tx in block["transactions"]
+                ],
+            }
+            updated_blockchain.append(updated_block)
+        blockchain = updated_blockchain
+        open_transactions = json.loads(file_content[1])
+        updated_transactions = []
+        for txn in open_transactions:
+            updated_transaction = OrderedDict(
+                [
+                    ("sender", txn["sender"]),
+                    ("recipient", txn["recipient"]),
+                    ("amount", txn["amount"]),
+                ]
+            )
+            updated_transactions.append(updated_transaction)
+        open_transactions = updated_transactions
+
+
+load_data()
+
+
+def save_data():
+    """saves blockchain data to file"""
+    with open("blockchain.txt", mode="w", encoding="utf-8") as blockchain_file:
+        blockchain_file.write(json.dumps(blockchain))
+        blockchain_file.write("\n")
+        blockchain_file.write(json.dumps(open_transactions))
 
 
 def get_last_blockchain_value():
@@ -137,6 +189,7 @@ def mine_block():
         "proof": proof,
     }
     blockchain.append(block)
+    save_data()
     return True
 
 
@@ -232,6 +285,7 @@ while COMMAND != "exit":
         case "mine" | "MINE":
             if mine_block():
                 open_transactions = []
+                save_data()
         case "part" | "PART":
             print(participants)
         case _:
