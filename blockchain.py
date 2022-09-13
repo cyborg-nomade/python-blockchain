@@ -79,7 +79,7 @@ def save_data():
             blockchain_file.write(json.dumps(open_transactions))
             # data_to_save = {"chain": blockchain, "ot": open_transactions}
             # blockchain_file.write(pickle.dumps(data_to_save))
-    except IOError:
+    except (IOError, IndexError):
         print("Saving failed!")
 
 
