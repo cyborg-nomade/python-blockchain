@@ -4,8 +4,10 @@
 import hashlib
 import json
 
+from classes.block import Block
 
-def hash_string_256(string):
+
+def hash_string_256(string: str) -> str:
     """returns the SHA256 hash string of the given string
 
     Args:
@@ -17,7 +19,7 @@ def hash_string_256(string):
     return hashlib.sha256(string).hexdigest()
 
 
-def hash_block(block):
+def hash_block(block: Block) -> str:
     """Returns the hashed string of the block
 
     Args:
@@ -26,4 +28,5 @@ def hash_block(block):
     Returns:
         string: the string hash of the block
     """
-    return hash_string_256(json.dumps(block, sort_keys=True).encode())
+    hashabled_block = block.__dict__.copy()
+    return hash_string_256(json.dumps(hashabled_block, sort_keys=True).encode())

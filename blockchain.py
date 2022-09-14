@@ -71,7 +71,8 @@ def save_data():
     """saves blockchain data to file"""
     try:
         with open("blockchain.txt", mode="w", encoding="utf-8") as blockchain_file:
-            blockchain_file.write(json.dumps(blockchain))
+            saveable_chain = [block.__dict__ for block in blockchain]
+            blockchain_file.write(json.dumps(saveable_chain))
             blockchain_file.write("\n")
             blockchain_file.write(json.dumps(open_transactions))
             # data_to_save = {"chain": blockchain, "ot": open_transactions}
@@ -199,7 +200,6 @@ def mine_block() -> bool:
     copied_transactions.append(reward_transaction)
     block = Block(len(blockchain), hashed_block, copied_transactions, proof)
     blockchain.append(block)
-    save_data()
     return True
 
 
@@ -246,7 +246,7 @@ def print_blockchain_blocks():
     for index, block in enumerate(blockchain):
         print(20 * "-")
         print("Outputting block number: " + str(index + 1))
-        print(block)
+        print(block.__dict__)
         print(20 * "-")
     print("\n\nDONE!")
     input("Click to continue...")
@@ -290,8 +290,11 @@ while COMMAND != "exit":
             print_blockchain_blocks()
         case "mine" | "MINE":
             if mine_block():
+                print("Block mined!")
                 open_transactions = []
+                print("Open transactions cleaned up")
                 save_data()
+                print("Data saved!")
         case "part" | "PART":
             print(participants)
         case _:
