@@ -3,6 +3,8 @@
 from time import time
 from typing import Any
 
+from classes.transactions import Transaction
+
 
 class Block:
     """Defines a blockchain block"""
@@ -11,7 +13,7 @@ class Block:
         self,
         index: int,
         previous_hash: str,
-        transactions: list[Any],
+        transactions: list[Transaction],
         proof: int,
         timestamp=None,
     ) -> None:

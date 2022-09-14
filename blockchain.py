@@ -5,6 +5,7 @@ from functools import reduce
 from collections import OrderedDict
 from utils.hash_util import hash_string_256, hash_block
 from classes.block import Block
+from classes.transactions import Transaction
 
 MINING_REWARD = 10
 blockchain = []
@@ -28,13 +29,7 @@ def load_data():
             updated_blockchain = []
             for block in blockchain:
                 converted_txs = [
-                    OrderedDict(
-                        [
-                            ("sender", tx["sender"]),
-                            ("recipient", tx["recipient"]),
-                            ("amount", tx["amount"]),
-                        ]
-                    )
+                    Transaction(tx["sender"], tx["recipient"], tx["amount"])
                     for tx in block["transactions"]
                 ]
                 updated_block = Block(
@@ -49,12 +44,8 @@ def load_data():
             open_transactions = json.loads(file_content[1])
             updated_transactions = []
             for txn in open_transactions:
-                updated_transaction = OrderedDict(
-                    [
-                        ("sender", txn["sender"]),
-                        ("recipient", txn["recipient"]),
-                        ("amount", txn["amount"]),
-                    ]
+                updated_transaction = Transaction(
+                    txn["sender"], txn["recipient"], txn["amount"]
                 )
                 updated_transactions.append(updated_transaction)
             open_transactions = updated_transactions
@@ -74,7 +65,8 @@ def save_data():
             saveable_chain = [block.__dict__ for block in blockchain]
             blockchain_file.write(json.dumps(saveable_chain))
             blockchain_file.write("\n")
-            blockchain_file.write(json.dumps(open_transactions))
+            saveable_txs = [txn.__dict__ for txn in open_transactions]
+            blockchain_file.write(json.dumps(saveable_txs))
             # data_to_save = {"chain": blockchain, "ot": open_transactions}
             # blockchain_file.write(pickle.dumps(data_to_save))
     except (IOError, IndexError):
