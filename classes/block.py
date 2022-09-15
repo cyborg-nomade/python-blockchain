@@ -1,12 +1,11 @@
 """Defines a blockchain block"""
 
 from time import time
-from typing import Any
-
+from classes.printable import Printable
 from classes.transactions import Transaction
 
 
-class Block:
+class Block(Printable):
     """Defines a blockchain block"""
 
     def __init__(

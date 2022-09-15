@@ -243,20 +243,7 @@ def get_user_choice():
 
 def print_blockchain_blocks():
     """Prints all the blocks in the blockchain"""
-    printable_chain = [
-        block.__dict__
-        for block in [
-            Block(
-                block_el.index,
-                block_el.previous_hash,
-                [tx.__dict__ for tx in block_el.transactions],
-                block_el.proof,
-                block_el.timestamp,
-            )
-            for block_el in blockchain
-        ]
-    ]
-    for index, block in enumerate(printable_chain):
+    for index, block in enumerate(blockchain):
         print(20 * "-")
         print("Outputting block number: " + str(index + 1))
         print(block)

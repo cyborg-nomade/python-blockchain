@@ -3,8 +3,10 @@
 
 from collections import OrderedDict
 
+from classes.printable import Printable
 
-class Transaction:
+
+class Transaction(Printable):
     """Defines a transactions in the blockchain"""
 
     def __init__(self, sender: str, recipient: str, amount: float) -> None:
