@@ -11,7 +11,6 @@ MINING_REWARD = 10
 blockchain: list[Block] = []
 open_transactions: list[Transaction] = []
 OWNER = "Uriel"
-participants = {OWNER}
 
 
 def load_data():
@@ -286,7 +285,6 @@ while COMMAND != "exit":
     print("EXIT: exits the program")
     print("TRANS: includes a new pending transaction")
     print("MINE: mines a new block")
-    print("PART: prints all the participants in the blockchain")
     print("PRINT: prints all the blocks in the blockchain\n")
     COMMAND = get_user_choice()
 
@@ -309,8 +307,6 @@ while COMMAND != "exit":
                 print("Open transactions cleaned up")
                 save_data()
                 print("Data saved!")
-        case "part" | "PART":
-            print(participants)
         case _:
             print("That's not a command. Try again")
 
