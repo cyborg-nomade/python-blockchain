@@ -8,8 +8,8 @@ from classes.block import Block
 from classes.transactions import Transaction
 
 MINING_REWARD = 10
-blockchain = []
-open_transactions = []
+blockchain: list[Block] = []
+open_transactions: list[Transaction] = []
 OWNER = "Uriel"
 participants = {OWNER}
 
@@ -62,7 +62,19 @@ def save_data():
     """saves blockchain data to file"""
     try:
         with open("blockchain.txt", mode="w", encoding="utf-8") as blockchain_file:
-            saveable_chain = [block.__dict__ for block in blockchain]
+            saveable_chain = [
+                block.__dict__
+                for block in [
+                    Block(
+                        block_el.index,
+                        block_el.previous_hash,
+                        [tx.__dict__ for tx in block_el.transactions],
+                        block_el.proof,
+                        block_el.timestamp,
+                    )
+                    for block_el in blockchain
+                ]
+            ]
             blockchain_file.write(json.dumps(saveable_chain))
             blockchain_file.write("\n")
             saveable_txs = [txn.__dict__ for txn in open_transactions]
@@ -84,14 +96,14 @@ def get_last_blockchain_value():
     return blockchain[-1]
 
 
-def verify_transaction(transaction) -> bool:
+def verify_transaction(transaction: Transaction) -> bool:
     """verifies transaction against sender's balance
 
     Args:
         transaction: the transaction to be verified
     """
-    sender_balance = get_balances(transaction["sender"])
-    return sender_balance >= transaction["amount"]
+    sender_balance = get_balances(transaction.sender)
+    return sender_balance >= transaction.amount
 
 
 def add_transaction(sender: str, recipient: str, amount: float = 1.0) -> bool:
@@ -102,13 +114,10 @@ def add_transaction(sender: str, recipient: str, amount: float = 1.0) -> bool:
         recipient (str): the recipient name,
         amount (float): the amount to add to the blockchain
     """
-    transaction = OrderedDict(
-        [("sender", sender), ("recipient", recipient), ("amount", amount)]
-    )
+    transaction = Transaction(sender, recipient, amount)
     if verify_transaction(transaction):
-        participants.add(sender)
-        participants.add(recipient)
         open_transactions.append(transaction)
+        save_data()
         return True
     return False
 
@@ -123,12 +132,10 @@ def get_balances(participant: str) -> int:
         int: participants' balance
     """
     tx_sender = [
-        [tx["amount"] for tx in block.transactions if tx["sender"] == participant]
+        [tx.amount for tx in block.transactions if tx.sender == participant]
         for block in blockchain
     ]
-    open_tx_sender = [
-        tx["amount"] for tx in open_transactions if tx["sender"] == participant
-    ]
+    open_tx_sender = [tx.amount for tx in open_transactions if tx.sender == participant]
     tx_sender.append(open_tx_sender)
     amount_sent = reduce(
         lambda tx_sum, tx_amount: tx_sum + sum(tx_amount)
@@ -139,7 +146,7 @@ def get_balances(participant: str) -> int:
     )
 
     tx_recipient = [
-        [tx["amount"] for tx in block.transactions if tx["recipient"] == participant]
+        [tx.amount for tx in block.transactions if tx.recipient == participant]
         for block in blockchain
     ]
     amount_received = reduce(
@@ -153,7 +160,7 @@ def get_balances(participant: str) -> int:
     return amount_received - amount_sent
 
 
-def valid_proof(transactions, last_hash, proof) -> bool:
+def valid_proof(transactions: list[Transaction], last_hash: str, proof: int) -> bool:
     """returns whether a proof-of-work is valid
 
     Args:
@@ -161,7 +168,11 @@ def valid_proof(transactions, last_hash, proof) -> bool:
         last_hash (string): the has string of the last block successfully mined
         proof (string): a string of numbers
     """
-    guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    guess = (
+        str([txn.to_ordered_dict() for txn in transactions])
+        + str(last_hash)
+        + str(proof)
+    ).encode()
     guess_hash = hash_string_256(guess)
     return guess_hash[0:2] == "00"
 
@@ -185,9 +196,7 @@ def mine_block() -> bool:
     last_block = blockchain[-1]
     hashed_block = hash_block(last_block)
     proof = proof_of_work()
-    reward_transaction = OrderedDict(
-        [("sender", "MINING"), ("recipient", OWNER), ("amount", MINING_REWARD)]
-    )
+    reward_transaction = Transaction("MINING", OWNER, MINING_REWARD)
     copied_transactions = open_transactions[:]
     copied_transactions.append(reward_transaction)
     block = Block(len(blockchain), hashed_block, copied_transactions, proof)
@@ -235,10 +244,23 @@ def get_user_choice():
 
 def print_blockchain_blocks():
     """Prints all the blocks in the blockchain"""
-    for index, block in enumerate(blockchain):
+    printable_chain = [
+        block.__dict__
+        for block in [
+            Block(
+                block_el.index,
+                block_el.previous_hash,
+                [tx.__dict__ for tx in block_el.transactions],
+                block_el.proof,
+                block_el.timestamp,
+            )
+            for block_el in blockchain
+        ]
+    ]
+    for index, block in enumerate(printable_chain):
         print(20 * "-")
         print("Outputting block number: " + str(index + 1))
-        print(block.__dict__)
+        print(block)
         print(20 * "-")
     print("\n\nDONE!")
     input("Click to continue...")

@@ -29,4 +29,7 @@ def hash_block(block: Block) -> str:
         string: the string hash of the block
     """
     hashabled_block = block.__dict__.copy()
+    hashabled_block["transactions"] = [
+        tx.to_ordered_dict() for tx in hashabled_block["transactions"]
+    ]
     return hash_string_256(json.dumps(hashabled_block, sort_keys=True).encode())
