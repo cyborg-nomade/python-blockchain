@@ -2,10 +2,10 @@
 
 import json
 from functools import reduce
-from collections import OrderedDict
-from utils.hash_util import hash_string_256, hash_block
+from utils.hash_util import hash_block
 from classes.block import Block
 from classes.transactions import Transaction
+from classes.verification import Verification
 
 MINING_REWARD = 10
 blockchain: list[Block] = []
@@ -95,33 +95,7 @@ def get_last_blockchain_value():
     return blockchain[-1]
 
 
-def verify_transaction(transaction: Transaction) -> bool:
-    """verifies transaction against sender's balance
-
-    Args:
-        transaction: the transaction to be verified
-    """
-    sender_balance = get_balances(transaction.sender)
-    return sender_balance >= transaction.amount
-
-
-def add_transaction(sender: str, recipient: str, amount: float = 1.0) -> bool:
-    """add transaction to blockchain
-
-    Args:
-        sender (str): the sender name,
-        recipient (str): the recipient name,
-        amount (float): the amount to add to the blockchain
-    """
-    transaction = Transaction(sender, recipient, amount)
-    if verify_transaction(transaction):
-        open_transactions.append(transaction)
-        save_data()
-        return True
-    return False
-
-
-def get_balances(participant: str) -> int:
+def get_balances(participant: str) -> float:
     """gets a participants' balance form the blockchain
 
     Args:
@@ -159,21 +133,21 @@ def get_balances(participant: str) -> int:
     return amount_received - amount_sent
 
 
-def valid_proof(transactions: list[Transaction], last_hash: str, proof: int) -> bool:
-    """returns whether a proof-of-work is valid
+def add_transaction(sender: str, recipient: str, amount: float = 1.0) -> bool:
+    """add transaction to blockchain
 
     Args:
-        transaction (list): a list of transaction objects
-        last_hash (string): the has string of the last block successfully mined
-        proof (string): a string of numbers
+        sender (str): the sender name,
+        recipient (str): the recipient name,
+        amount (float): the amount to add to the blockchain
     """
-    guess = (
-        str([txn.to_ordered_dict() for txn in transactions])
-        + str(last_hash)
-        + str(proof)
-    ).encode()
-    guess_hash = hash_string_256(guess)
-    return guess_hash[0:2] == "00"
+    transaction = Transaction(sender, recipient, amount)
+    verifier = Verification()
+    if verifier.verify_transaction(transaction, get_balances):
+        open_transactions.append(transaction)
+        save_data()
+        return True
+    return False
 
 
 def proof_of_work() -> int:
@@ -185,7 +159,8 @@ def proof_of_work() -> int:
     last_block = blockchain[-1]
     last_hash = hash_block(last_block)
     proof = 0
-    while not valid_proof(open_transactions, last_hash, proof):
+    verifier = Verification()
+    while not verifier.valid_proof(open_transactions, last_hash, proof):
         proof += 1
     return proof
 
@@ -252,20 +227,6 @@ def print_blockchain_blocks():
     input("Click to continue...")
 
 
-def verify_chain() -> bool:
-    """verifies the validity of the blockchain"""
-    for (index, block) in enumerate(blockchain):
-        if index == 0:
-            continue
-        if block.previous_hash != hash_block(blockchain[index - 1]):
-            print("Block hash is not valid")
-            return False
-        if not valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
-            print("Proof of work is not valid")
-            return False
-    return True
-
-
 COMMAND = ""
 while COMMAND != "exit":
     print("\nChoose the command you want to execute...")
@@ -275,7 +236,8 @@ while COMMAND != "exit":
     print("PRINT: prints all the blocks in the blockchain\n")
     COMMAND = get_user_choice()
 
-    if not verify_chain():
+    verifier2 = Verification()
+    if not verifier2.verify_chain(blockchain):
         print_blockchain_blocks()
         print("The chain is invalid!")
         break
